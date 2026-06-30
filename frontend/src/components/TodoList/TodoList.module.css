@@ -1,0 +1,111 @@
+.container {
+  margin-top: 2rem;
+}
+
+.header {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterButton {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filterButton:hover {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.filterButton.active {
+  background-color: #4caf50;
+  border-color: #4caf50;
+  color: white;
+}
+
+.stats {
+  font-size: 0.875rem;
+  color: #666;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.separator {
+  color: #ccc;
+}
+
+.list {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0 0 8px 8px;
+  min-height: 200px;
+}
+
+.loading,
+.error,
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error {
+  color: #f44336;
+}
+
+.retryButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.retryButton:hover {
+  background-color: #45a049;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    justify-content: center;
+  }
+
+  .stats {
+    justify-content: center;
+  }
+}

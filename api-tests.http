@@ -1,0 +1,297 @@
+# Todo API Test File
+# Use with VS Code REST Client extension
+# Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### Variables will be set from responses
+# @todoId = set-after-create
+
+###############################################
+# 1. Create Todo
+###############################################
+
+# @name createTodo
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Learn NestJS",
+  "description": "Complete the comprehensive tutorial"
+}
+
+###############################################
+# 2. Create Another Todo
+###############################################
+
+# @name createTodo2
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Build Todo App",
+  "description": "Create production-ready application"
+}
+
+###############################################
+# 3. Create Todo Without Description
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Deploy to Production"
+}
+
+###############################################
+# 4. Get All Todos
+###############################################
+
+GET {{baseUrl}}/todos
+
+###############################################
+# 5. Get Completed Todos
+###############################################
+
+GET {{baseUrl}}/todos?status=completed
+
+###############################################
+# 6. Get Pending Todos
+###############################################
+
+GET {{baseUrl}}/todos?status=pending
+
+###############################################
+# 7. Get Todo by ID
+# Replace with actual UUID from create response
+###############################################
+
+GET {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+
+###############################################
+# 8. Update Todo - Mark as Completed
+# Replace with actual UUID
+###############################################
+
+PATCH {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+Content-Type: {{contentType}}
+
+{
+  "completed": true
+}
+
+###############################################
+# 9. Update Todo - Change Title
+# Replace with actual UUID
+###############################################
+
+PATCH {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+Content-Type: {{contentType}}
+
+{
+  "title": "Learn NestJS - Updated",
+  "description": "Complete tutorial with PostgreSQL"
+}
+
+###############################################
+# 10. Update Todo - Partial Update
+# Replace with actual UUID
+###############################################
+
+PATCH {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+Content-Type: {{contentType}}
+
+{
+  "completed": false
+}
+
+###############################################
+# 11. Delete Todo
+# Replace with actual UUID
+###############################################
+
+DELETE {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+
+###############################################
+# ERROR TEST CASES
+###############################################
+
+###############################################
+# 12. Validation Error - Empty Title
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "",
+  "description": "This should fail"
+}
+
+###############################################
+# 13. Validation Error - Missing Title
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "description": "Title is required"
+}
+
+###############################################
+# 14. Validation Error - Title Too Long
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "This is a very long title that exceeds the maximum allowed length of 100 characters and should fail validation test",
+  "description": "Should fail"
+}
+
+###############################################
+# 15. Validation Error - Description Too Long
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Valid Title",
+  "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium."
+}
+
+###############################################
+# 16. Validation Error - Invalid Completed Type
+###############################################
+
+PATCH {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+Content-Type: {{contentType}}
+
+{
+  "completed": "yes"
+}
+
+###############################################
+# 17. UUID Validation Error - Invalid Format
+###############################################
+
+GET {{baseUrl}}/todos/invalid-uuid-format
+
+###############################################
+# 18. UUID Validation Error - Not UUID v4
+###############################################
+
+GET {{baseUrl}}/todos/12345678-1234-1234-1234-123456789012
+
+###############################################
+# 19. Not Found Error
+###############################################
+
+GET {{baseUrl}}/todos/00000000-0000-4000-8000-000000000000
+
+###############################################
+# 20. Not Found Error - Update
+###############################################
+
+PATCH {{baseUrl}}/todos/00000000-0000-4000-8000-000000000000
+Content-Type: {{contentType}}
+
+{
+  "title": "This todo doesn't exist"
+}
+
+###############################################
+# 21. Not Found Error - Delete
+###############################################
+
+DELETE {{baseUrl}}/todos/00000000-0000-4000-8000-000000000000
+
+###############################################
+# ADVANCED SCENARIOS
+###############################################
+
+###############################################
+# 22. Create Multiple Todos for Testing
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Morning Exercise",
+  "description": "30 minutes cardio"
+}
+
+###
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Read Book",
+  "description": "Chapter 5-7"
+}
+
+###
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Team Meeting",
+  "description": "Sprint planning at 2 PM"
+}
+
+###
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Code Review"
+}
+
+###############################################
+# 23. Verify Empty Description Handling
+###############################################
+
+POST {{baseUrl}}/todos
+Content-Type: {{contentType}}
+
+{
+  "title": "Test Empty Description",
+  "description": ""
+}
+
+###############################################
+# 24. Update to Empty Description
+###############################################
+
+PATCH {{baseUrl}}/todos/123e4567-e89b-12d3-a456-426614174000
+Content-Type: {{contentType}}
+
+{
+  "description": null
+}
+
+###############################################
+# NOTES
+###############################################
+
+# How to use:
+# 1. Install REST Client extension in VS Code
+# 2. Open this file
+# 3. Click "Send Request" above each request
+# 4. View responses in the right panel
+# 5. Copy actual UUIDs from create responses to test update/delete
+
+# Tips:
+# - Click on "Send Request" link above each ### section
+# - Responses appear in a new tab
+# - Use Ctrl+Alt+R (Windows) or Cmd+Alt+R (Mac) to send
+# - Click on response tabs to switch between results
