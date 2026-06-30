@@ -3,6 +3,7 @@
 /node_modules
 /build
 /src/assets
+*.mp4
 
 # Logs
 logs
