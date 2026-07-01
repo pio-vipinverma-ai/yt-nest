@@ -2,8 +2,10 @@
 /dist
 /node_modules
 /build
-/src/assets
-*.mp4
+/src/assets/*.mp4
+!src/assets/hls/
+!src/assets/hls/*.m3u8
+!src/assets/hls/*.ts
 
 # Logs
 logs
