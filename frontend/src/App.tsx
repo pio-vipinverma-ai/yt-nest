@@ -3,6 +3,7 @@ import axios from 'axios';
 import Layout from './components/Layout/Layout';
 import TodoForm from './components/TodoForm/TodoForm';
 import TodoList from './components/TodoList/TodoList';
+import VideoPlayer from './components/Video/VideoPlayer';
 import './styles/global.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
@@ -40,6 +41,7 @@ function App() {
 
   return (
     <Layout>
+      <VideoPlayer />
       <TodoForm onSuccess={handleSuccess} onSubmit={handleSubmit} />
       <TodoList key={refreshKey} onRefresh={handleSuccess} />
     </Layout>

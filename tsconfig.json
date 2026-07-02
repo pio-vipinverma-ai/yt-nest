@@ -22,5 +22,5 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["node_modules", "dist", "test", "frontend", "src/**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "test", "frontend", "src/**/*.spec.ts", "src/assets/hls/*"]
 }

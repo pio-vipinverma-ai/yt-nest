@@ -22,11 +22,12 @@ async function bootstrap() {
         directives: {
           defaultSrc: [`'self'`],
           styleSrc: [`'self'`, `'unsafe-inline'`],
-          scriptSrc: [`'self'`],
+          scriptSrc: [`'self'`, 'https://cdn.jsdelivr.net'],
           imgSrc: [`'self'`, 'data:', 'https:'],
         },
       },
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
 

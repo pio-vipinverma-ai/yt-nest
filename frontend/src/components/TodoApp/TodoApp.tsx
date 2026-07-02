@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../../utils/api';
+import VideoPlayer from '../Video/VideoPlayer';
 import './TodoApp.css';
 
 
@@ -241,18 +242,7 @@ const TodoApp: React.FC = () => {
       <header className="todo-header">
         <h1>📝 Todo List</h1>
         <p>Stay organized and productive</p>
-
-        
-      
-        
-      <video
-        src="http://localhost:3002/video/stream"
-        controls={true}
-        autoPlay={true}
-        muted={false}
-      />
-
-
+        <VideoPlayer />
       </header>
 
       {/* Add Todo Form */}
