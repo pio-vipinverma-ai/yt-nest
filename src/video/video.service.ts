@@ -1,11 +1,18 @@
 
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+// import ffmpegPath from 'ffmpeg-static';
 
 @Injectable()
 export class VideoService {
-  private readonly hlsRoot = path.join(process.cwd(), 'src/assets/hls');
+  private readonly hlsRoot = path.join(
+    process.cwd(),
+    'storage',
+    'hls',
+  );
+  private ffmpegProcess: ReturnType<typeof spawn> | null = null;
 
   getVideoStream(range: string) {
     const videoPath = path.join(process.cwd(), 'src/assets/sample.mp4');
@@ -27,16 +34,125 @@ export class VideoService {
     };
   }
 
+  buildFfmpegArgs(outputDir: string): string[] {
+    const outputFile = path.join(outputDir, 'index.m3u8').split(path.sep).join('/');
+    const inputSource = process.env.FFMPEG_INPUT || (process.platform === 'win32' ? 'video=Integrated Camera:audio=Microphone (Realtek(R) Audio)' : '0');
+
+    return [
+        '-y',
+        '-f',
+        'dshow',
+        '-i',
+        'video=Integrated Camera:audio=Microphone (Realtek(R) Audio)',
+        '-c:v',
+        'libx264',
+        '-preset',
+        'ultrafast',
+        '-tune',
+        'zerolatency',
+        '-g',
+        '30',
+        '-keyint_min',
+        '30',
+        '-fflags',
+        'nobuffer',
+        '-flags',
+        'low_delay',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-hls_time',
+        '1',
+        '-hls_list_size',
+        '2',
+        '-hls_flags',
+        'delete_segments',
+        '-f',
+        'hls',
+        outputFile,
+      ];
+  }
+
+  async startLiveStream(): Promise<void> {
+    if (this.ffmpegProcess) {
+      return;
+    }
+
+    const outputDir = path.join(this.hlsRoot, 'live');
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    const args = this.buildFfmpegArgs(outputDir);
+    //const ffmpegExecutable = typeof ffmpegPath === 'string' ? ffmpegPath : 'ffmpeg';
+    const ffmpegExecutable = 'ffmpeg';
+
+    console.log('Starting FFmpeg HLS stream for local camera...');
+    
+  
+    const processRef = spawn(
+      'C:\\Users\\VipinVerma\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.exe',
+      args,
+      {
+        cwd: process.cwd(),
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+
+
+        
+    processRef.on('spawn', () => {
+      console.log('FFmpeg started successfully');
+    });
+
+    console.log(args);
+    console.log('1111111111111111111111111111111111111');
+
+
+
+    this.ffmpegProcess = processRef;
+
+    processRef.stdout?.on('data', (chunk) => {
+      const text = chunk.toString().trim();
+      if (text) {
+        console.log(`[ffmpeg] ${text}`);
+      }
+    });
+
+    processRef.stderr?.on('data', (chunk) => {
+      const text = chunk.toString().trim();
+      if (text) {
+        console.error(`[ffmpeg] ${text}`);
+      }
+    });
+
+    processRef.on('error', (error) => {
+      console.error('Failed to start FFmpeg process:', error);
+      this.ffmpegProcess = null;
+    });
+
+    processRef.on('exit', (code, signal) => {
+      console.log(`FFmpeg exited with code ${code} and signal ${signal}`);
+      this.ffmpegProcess = null;
+    });
+  }
+
+  stopLiveStream(): void {
+    if (this.ffmpegProcess) {
+      this.ffmpegProcess.kill('SIGTERM');
+      this.ffmpegProcess = null;
+    }
+  }
+
   getMasterPlaylist(): string {
     return [
       '#EXTM3U',
       '#EXT-X-VERSION:3',
-      '#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,NAME="360p"',
-      '/video/hls/360p.m3u8',
-      '#EXT-X-STREAM-INF:BANDWIDTH=2500000,RESOLUTION=1280x720,NAME="720p"',
-      '/video/hls/720p.m3u8',
-      '#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080,NAME="1080p"',
-      '/video/hls/1080p.m3u8',
+      '#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360,NAME="live"',
+      '/live/index.m3u8',
     ].join('\n');
   }
 
@@ -61,7 +177,7 @@ export class VideoService {
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
     <script>
       const video = document.getElementById('video');
-      const src = '/video/hls/360p.m3u8';
+      const src = '/live/index.m3u8';
 
       if (window.Hls && Hls.isSupported()) {
         const hls = new Hls();
@@ -78,31 +194,16 @@ export class VideoService {
   }
 
   getPlaylist(playlistName = 'index.m3u8'): string {
-    const playlistPath = path.join(this.hlsRoot, playlistName);
+    const playlistPath = path.join(this.hlsRoot, 'live', playlistName);
     if (!fs.existsSync(playlistPath)) {
       throw new NotFoundException('HLS playlist not found');
     }
 
-    const content = fs.readFileSync(playlistPath, 'utf8');
-    return content
-      .split('\n')
-      .map((raw) => {
-        const line = raw.trim();
-        if (!line || line.startsWith('#')) {
-          return raw;
-        }
-
-        if (line.toLowerCase().endsWith('.ts')) {
-          return `/video/hls/${line}`;
-        }
-
-        return raw;
-      })
-      .join('\n');
+    return fs.readFileSync(playlistPath, 'utf8');
   }
 
   getSegment(segmentName: string): StreamableFile {
-    const segmentPath = path.join(this.hlsRoot, segmentName);
+    const segmentPath = path.join(this.hlsRoot, 'live', segmentName);
     if (!fs.existsSync(segmentPath)) {
       throw new NotFoundException('HLS segment not found');
     }

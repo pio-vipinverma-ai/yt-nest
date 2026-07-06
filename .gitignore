@@ -7,6 +7,11 @@
 !src/assets/hls/*.m3u8
 !src/assets/hls/*.ts
 
+# media server
+/media-server/node_modules
+/storage/hls/live
+
+
 # Logs
 logs
 *.log

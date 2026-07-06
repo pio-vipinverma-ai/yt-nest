@@ -1,18 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 
-function VideoPlayer() {
+
+
+function VideoPlayer({ sourceUrl }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [quality, setQuality] = useState('auto'); // 'auto' or numeric level index
   const [levels, setLevels] = useState([]); // { index, height, bitrate, name }
   const [isReady, setIsReady] = useState(false);
 
+  const src = sourceUrl;
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const src = 'http://localhost:3002/video/hls';
+    // const src = 'http://localhost:3002/video/hls';
 
     const configureHls = (hlsInstance) => {
       hlsRef.current = hlsInstance;
@@ -20,7 +24,24 @@ function VideoPlayer() {
       video.crossOrigin = 'anonymous';
 
       hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS.js error', event, data);
+        console.log('===== HLS ERROR =====');
+        console.log('Type:', data.type);
+        console.log('Details:', data.details);
+        console.log('Fatal:', data.fatal);
+        console.log(data);
+      });
+
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('MANIFEST_PARSED');
+        video.play().catch(console.error);
+      });
+
+      hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => {
+        console.log('MEDIA_ATTACHED');
+      });
+
+      hlsInstance.on(Hls.Events.LEVEL_LOADED, (_, data) => {
+        console.log('LEVEL_LOADED', data);
       });
 
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -44,7 +65,12 @@ function VideoPlayer() {
 
     const setupHls = () => {
       if (Hls.isSupported()) {
-        const hlsInstance = new Hls({ enableWorker: false });
+        const hlsInstance = new Hls({ 
+          enableWorker: false,
+          lowLatencyMode: true,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 2,
+        });
         hlsInstance.loadSource(src);
         hlsInstance.attachMedia(video);
         configureHls(hlsInstance);
@@ -74,7 +100,7 @@ function VideoPlayer() {
         console.error('Cleanup error', e);
       }
     };
-  }, []);
+  }, [sourceUrl]);
 
   const onQualityChange = (val) => {
     setQuality(val);
@@ -106,11 +132,10 @@ function VideoPlayer() {
 
     if (video) {
       if (val === 'auto') {
-        video.src = 'http://localhost:3002/video/hls';
+        video.src = 'http://localhost:3002/assets/hls/index.m3u8';
       } else {
-        const lvl = levels.find((l) => String(l.index) === String(val));
-        const name = lvl && lvl.name ? lvl.name : `${val}p`;
-        video.src = `http://localhost:3002/video/hls/${name}.m3u8`;
+        console.warn('Live stream currently serves a single HLS playlist. Falling back to the default source.');
+        video.src = 'http://localhost:3002/live/live/index.m3u8';
       }
     }
   };
@@ -137,21 +162,16 @@ function VideoPlayer() {
                   {l.height ? `${l.height}p` : `${Math.round(l.bitrate / 1000)}kbps`}
                 </option>
               ))
-            : (
-                // fallback static options while manifest loads
-                <>
-                  <option value="0">360p</option>
-                  <option value="1">720p</option>
-                  <option value="2">1080p</option>
-                </>
-              )}
+            : null}
         </select>
       </div>
 
       <video
         ref={videoRef}
-        width="800"
+        width="800"        
         controls
+        muted
+        autoPlay
         playsInline
         style={{ borderRadius: 8, background: '#000' }}
       />

@@ -41,7 +41,7 @@ function App() {
 
   return (
     <Layout>
-      <VideoPlayer />
+      <VideoPlayer sourceUrl="http://localhost:3002/live/live/index.m3u8" />
       <TodoForm onSuccess={handleSuccess} onSubmit={handleSubmit} />
       <TodoList key={refreshKey} onRefresh={handleSuccess} />
     </Layout>

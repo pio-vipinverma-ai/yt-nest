@@ -15,4 +15,12 @@ describe('VideoService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  it('builds ffmpeg args for a local HLS manifest', () => {
+    const args = service.buildFfmpegArgs('hls/live');
+
+    expect(args).toContain('-f');
+    expect(args).toContain('hls');
+    expect(args).toContain('hls/live/index.m3u8');
+  });
 });

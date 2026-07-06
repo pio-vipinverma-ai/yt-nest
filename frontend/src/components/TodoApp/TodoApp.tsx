@@ -242,7 +242,11 @@ const TodoApp: React.FC = () => {
       <header className="todo-header">
         <h1>📝 Todo List</h1>
         <p>Stay organized and productive</p>
-        <VideoPlayer />
+        
+      <VideoPlayer
+        sourceUrl="http://localhost:3002/assets/hls/index.m3u8"
+      />
+
       </header>
 
       {/* Add Todo Form */}
