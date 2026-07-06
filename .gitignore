@@ -10,6 +10,7 @@
 # media server
 /media-server/node_modules
 /storage/hls/live
+/storage/recordings
 
 
 # Logs

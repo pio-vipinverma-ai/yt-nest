@@ -13,6 +13,7 @@ export class VideoService {
     'hls',
   );
   private ffmpegProcess: ReturnType<typeof spawn> | null = null;
+  //private recordingProcess: ReturnType<typeof spawn> | null = null;
 
   getVideoStream(range: string) {
     const videoPath = path.join(process.cwd(), 'src/assets/sample.mp4');
@@ -34,9 +35,21 @@ export class VideoService {
     };
   }
 
-  buildFfmpegArgs(outputDir: string): string[] {
-    const outputFile = path.join(outputDir, 'index.m3u8').split(path.sep).join('/');
+  buildFfmpegArgs(outputDir: string, recordingFile: string): string[] {
+    // const outputFile = path.join(outputDir, 'index.m3u8').split(path.sep).join('/');
     const inputSource = process.env.FFMPEG_INPUT || (process.platform === 'win32' ? 'video=Integrated Camera:audio=Microphone (Realtek(R) Audio)' : '0');
+
+    const outputFile = path
+    .join(outputDir, 'index.m3u8')
+    .replace(/\\/g, '/');
+
+    const recordingFileNormalized =
+    recordingFile.replace(/\\/g, '/');
+
+    console.log(
+      'TEE OUTPUT:',
+      `[f=hls:hls_time=1:hls_list_size=2:hls_flags=delete_segments]${outputFile}|[f=mp4]${recordingFileNormalized}`,
+    );
 
     return [
         '-y',
@@ -46,6 +59,8 @@ export class VideoService {
         'video=Integrated Camera:audio=Microphone (Realtek(R) Audio)',
         '-c:v',
         'libx264',
+        '-pix_fmt',
+        'yuv420p',
         '-preset',
         'ultrafast',
         '-tune',
@@ -66,17 +81,29 @@ export class VideoService {
         '44100',
         '-ac',
         '2',
-        '-hls_time',
-        '1',
-        '-hls_list_size',
-        '2',
-        '-hls_flags',
-        'delete_segments',
+        // '-hls_time',
+        // '1',
+        // '-hls_list_size',
+        // '2',
+        // '-hls_flags',
+        // 'delete_segments',
+        
+        '-map',
+        '0:v:0',
+        '-map',
+        '0:a:0',
+
+        '-flags',
+        '+global_header',
+
         '-f',
-        'hls',
-        outputFile,
+        'tee',
+
+        `[f=hls:hls_time=1:hls_list_size=2:hls_flags=delete_segments]${outputFile}|[f=mp4:movflags=+faststart+frag_keyframe+empty_moov]${recordingFileNormalized}`,
+
       ];
   }
+  
 
   async startLiveStream(): Promise<void> {
     if (this.ffmpegProcess) {
@@ -86,24 +113,98 @@ export class VideoService {
     const outputDir = path.join(this.hlsRoot, 'live');
     fs.mkdirSync(outputDir, { recursive: true });
 
-    const args = this.buildFfmpegArgs(outputDir);
+    const recordingDir = path.join(
+      process.cwd(),
+      'storage',
+      'recordings',
+    );
+
+    fs.mkdirSync(recordingDir, {
+      recursive: true,
+    });
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-');
+
+    const recordingFile = path.join(
+      recordingDir,
+      `recording-${timestamp}.mp4`,
+    );
+    //const args = this.buildFfmpegArgs(outputDir);
+    const args = this.buildFfmpegArgs(
+      outputDir,
+      recordingFile,
+    );
+
+    console.log('-----------------------------args----------',args);
+    
+console.log('----------Recording File:', recordingFile);
+console.log('-----------Recording Exists:', fs.existsSync(recordingFile));
+console.log('-----------Recording Dir:', fs.existsSync(recordingDir));
+
+
+
+
     //const ffmpegExecutable = typeof ffmpegPath === 'string' ? ffmpegPath : 'ffmpeg';
     const ffmpegExecutable = 'ffmpeg';
 
     console.log('Starting FFmpeg HLS stream for local camera...');
     
+    
+    
+    // const recordingArgs = [
+    //   '-y',
+
+    //   '-f',
+    //   'dshow',
+
+    //   '-i',
+    //   'video=Integrated Camera:audio=Microphone (Realtek(R) Audio)',
+
+    //   '-c:v',
+    //   'libx264',
+
+    //   '-c:a',
+    //   'aac',
+
+    //   recordingFile,
+    // ];
   
     const processRef = spawn(
       'C:\\Users\\VipinVerma\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.exe',
       args,
       {
         cwd: process.cwd(),
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ['pipe', 'pipe', 'pipe'],
       },
     );
 
+    // const recordingRef = spawn(
+    //   'C:\\Users\\VipinVerma\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.exe',
+    //   recordingArgs,
+    //   {
+    //     cwd: process.cwd(),
+    //     stdio: ['ignore', 'pipe', 'pipe'],
+    //   },
+    // );
 
-        
+    // this.recordingProcess = recordingRef;
+
+    
+    // recordingRef.on('spawn', () => {
+    //   console.log('Recording started:', recordingFile);
+    // });
+
+    // recordingRef.stderr?.on('data', (chunk) => {
+    //   console.log(`[recording] ${chunk.toString()}`);
+    // });
+
+    // recordingRef.on('exit', (code) => {
+    //   console.log(`Recording stopped. Exit code=${code}`);
+    // });
+
+
     processRef.on('spawn', () => {
       console.log('FFmpeg started successfully');
     });
@@ -127,6 +228,8 @@ export class VideoService {
       if (text) {
         console.error(`[ffmpeg] ${text}`);
       }
+
+      console.error(chunk.toString());
     });
 
     processRef.on('error', (error) => {
@@ -140,12 +243,14 @@ export class VideoService {
     });
   }
 
-  stopLiveStream(): void {
-    if (this.ffmpegProcess) {
-      this.ffmpegProcess.kill('SIGTERM');
-      this.ffmpegProcess = null;
-    }
+  
+stopLiveStream(): void {
+  if (this.ffmpegProcess) {
+    this.ffmpegProcess.stdin?.write('q');
+    this.ffmpegProcess = null;
   }
+}
+
 
   getMasterPlaylist(): string {
     return [

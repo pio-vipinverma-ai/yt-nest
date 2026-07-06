@@ -10,6 +10,7 @@ import {
 import * as fs from 'fs';
 import { VideoService } from './video.service';
 import type { Request, Response } from 'express';
+import path from 'path/win32';
 
 @Controller('video')
 export class VideoController {
@@ -86,5 +87,33 @@ export class VideoController {
     const streamable = this.videoService.getSegment(segment);
     // @ts-ignore
     streamable.getStream().pipe(res);
+  }
+
+  
+  @Get('recordings')
+  getRecordings() {
+    const dir = path.join(
+      process.cwd(),
+      'storage',
+      'recordings',
+    );
+
+    return fs.readdirSync(dir);
+  }
+
+  @Get('recordings/:file')
+    getRecording(
+      @Param('file') file: string,
+    ) {
+        return new StreamableFile(
+          fs.createReadStream(
+            path.join(
+              process.cwd(),
+              'storage',
+              'recordings',
+              file,
+            ),
+          ),
+    );
   }
 }
